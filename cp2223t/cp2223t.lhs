@@ -1118,8 +1118,8 @@ simples e elegantes.
 \subsection*{Problema 1}
 Funções auxiliares pedidas:
 \begin{code}
-loop = undefined
-initial = undefined
+loop a b c ((g, h), f) = (((a * g + b * h + c * f), g), h)
+initial = ((1,1),0)
 wrap = p2
 \end{code}
 
