@@ -775,8 +775,8 @@ ser consultado e analisado à medida que isso for necessário.
 \subsection{Como exprimir cálculos e diagramas em LaTeX/lhs2tex}
 Como primeiro exemplo, estudar o texto fonte deste trabalho para obter o
 efeito:\footnote{Exemplos tirados de \cite{Ol18}.}
-\begin{eqnarray*}
 \start
+\begin{eqnarray*}
      |id = split f g|
 %
 \just\equiv{ universal property }
@@ -1116,6 +1116,7 @@ Valoriza-se a escrita de \emph{pouco} código que corresponda a soluções
 simples e elegantes.
 
 \subsection*{Problema 1}
+
 Funções auxiliares pedidas:
 \begin{code}
 loop a b c ((g, h), f) = (((a * g + b * h + c * f), g), h)
@@ -1123,10 +1124,19 @@ initial = ((1,1),0)
 wrap = p2
 \end{code}
 
+\begin{spec}
+f a b c 0 = 0
+f a b c 1 = 1
+f a b c 2 = 1
+f a b c (n+3) = a * f a b c (n+2) + b * f a b c (n+1) + c * f a b c n
+\end{spec}
+
 \subsection*{Problema 2}
 Gene de |tax|:
 \begin{code}
-gene = undefined
+gene = (id -|- id >< (groupBy (\x y -> countSpaces x >= 0 && countSpaces y > 0) . map (drop 4))) . out
+
+countSpaces = length . takeWhile (== ' ')
 \end{code}
 Função de pós-processamento:
 \begin{code}
