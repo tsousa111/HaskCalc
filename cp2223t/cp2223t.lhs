@@ -1208,7 +1208,9 @@ rose2List = cataRose gr2l
 
 gr2l = cons . (id >< concat)
 
-carpets = undefined
+carpets = anaList gcarp
+
+gcarp = (nil -|- (split (curry sierpinski ((0,0),32)) id)) . outNat
 
 present = undefined
 \end{code}
