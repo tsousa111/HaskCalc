@@ -1134,13 +1134,19 @@ f a b c (n+3) = a * f a b c (n+2) + b * f a b c (n+1) + c * f a b c n
 \subsection*{Problema 2}
 Gene de |tax|:
 \begin{code}
-gene = (id -|- id >< (groupBy (\x y -> countSpaces x >= 0 && countSpaces y > 0) . map (drop 4))) . out
+gene = (id -|- (id >< (groupBy (\x y -> countSpaces x >= 0 && countSpaces y > 0) . map (drop 4)))) . out
 
 countSpaces = length . takeWhile (== ' ')
 \end{code}
 Função de pós-processamento:
 \begin{code}
-post = undefined
+post :: Exp String String -> [[String]]
+post = cataExp (genepost)
+
+genepost = (either leftSide rightSide)
+leftSide = singl . singl 
+rightSide = cons . (split (singl . p1) (map cons . lstr . (id >< concat)))
+
 \end{code}
 
 \subsection*{Problema 3}
