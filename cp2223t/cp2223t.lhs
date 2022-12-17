@@ -161,13 +161,7 @@
 \begin{tabular}{ll}
 Grupo nr. & 99 (preencher)
 \\\hline
-a11111 & Nome1 (preencher)
-\\
-a22222 & Nome2 (preencher)
-\\
-a33333 & Nome3 (preencher)
-\\
-a44444 & Nome4 (preencher, se aplicável)
+a93248 & João Tiago Alves Fidalgo de Sousa 
 \end{tabular}
 \end{center}
 
@@ -1138,17 +1132,57 @@ gene = (id -|- (id >< (groupBy (\x y -> countSpaces x >= 0 && countSpaces y > 0)
 
 countSpaces = length . takeWhile (== ' ')
 \end{code}
+\newpage
 Função de pós-processamento:
 \begin{code}
 post :: Exp String String -> [[String]]
-post = cataExp (genepost)
+post = cataExp (gene_post)
 
-genepost = (either leftSide rightSide)
+gene_post = (either leftSide rightSide)
 leftSide = singl . singl 
-rightSide = cons . (split (singl . p1) (map cons . lstr . (id >< concat)))
+rightSide = cons . (split (singl . p1) ((map cons) . lstr . (id >< concat)))
 
 \end{code}
+\begin{eqnarray*}
+\xymatrix@@C=2cm{
+    |Exp S S|
+           \ar[d]_-{|post|}
+&
+    S + S \times (|Exp S S|)^*
+           \ar[d]^{id + id \times (|post|)^*}
+           \ar[l]_-{|inExp|}
+\\
+     ((S)^*)^*
+&
+     S + S \times (((S)^*)^*)^*
+           \ar[l]^-{|gene_post|}
+}
+\end{eqnarray*}
 
+Analisando melhor o gene do catamorfismo
+
+\begin{eqnarray*}
+\xymatrix@@C=2cm{
+    S  
+        \ar[d]_-{|singl . singl|}
+& 
+    S \times (((S)^*)^*)^*
+           \ar[d]^{|split (singl . p1) ((map cons) . lstr . (id >< concat))|}
+\\
+    ((S)^*)^*
+& 
+    (S)^* + ((S)^*)^*
+           \ar[d]^{|cons|}
+\\
+&
+    ((S)^*)^*
+}
+\end{eqnarray*}
+
+
+
+
+% ------------ Problema 3 -----------------
 \subsection*{Problema 3}
 \begin{code}
 squares = anaRose gsq
