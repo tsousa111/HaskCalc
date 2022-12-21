@@ -159,7 +159,7 @@
 
 \begin{center}\large
 \begin{tabular}{ll}
-Grupo nr. & 99 (preencher)
+Grupo nr. & 51 
 \\\hline
 a93248 & João Tiago Alves Fidalgo de Sousa 
 \end{tabular}
@@ -1187,11 +1187,26 @@ Analisando melhor o gene do catamorfismo
 \begin{code}
 squares = anaRose gsq
 
-gsq = undefined
+gsq = (either (id >< nil) (split p1 surrounding_squares)) . distr . (center_square >< outNat) 
+
+center_square = add_side_to_x . add_side_to_y . (id >< (/3))
+
+surrounding_squares = rstr . ((conc . split top_squares (conc . split middle_squares bottom_squares)) >< id)
+
+top_squares = cons . split sub_side_to_x (cons . split id (singl . add_side_to_x)) . add_side_to_y
+middle_squares = cons . split sub_side_to_x (singl . add_side_to_x)
+bottom_squares = cons . split sub_side_to_x (cons . split id (singl . add_side_to_x)) . sub_side_to_y
+
+add_side_to_x = split (split (uncurry (+) . (p1 >< id)) (p2 . p1)) p2
+add_side_to_y = split (split (p1 . p1) (uncurry (+) . (p2 >< id))) p2
+sub_side_to_x = split (split (uncurry (-) . (p1 >< id)) (p2 . p1)) p2
+sub_side_to_y = split (split (p1 . p1) (uncurry (-) . (p2 >< id))) p2
+
+
 
 rose2List = cataRose gr2l 
 
-gr2l = undefined
+gr2l = cons . (id >< concat)
 
 carpets = undefined
 
