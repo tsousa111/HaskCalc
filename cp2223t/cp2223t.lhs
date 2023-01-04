@@ -1110,6 +1110,56 @@ Valoriza-se a escrita de \emph{pouco} código que corresponda a soluções
 simples e elegantes.
 
 \subsection*{Problema 1}
+Partindo da função inicial:
+\begin{spec}
+f a b c 0 = 0
+f a b c 1 = 1
+f a b c 2 = 1
+f a b c (n+3) = a * f a b c (n+2) + b * f a b c (n+1) + c * f a b c n
+\end{spec}
+Igualando:
+\begin{spec}
+g a b c 0 = f a b c (0+2)
+g a b c (n+1) = f a b c (n+3)
+\end{spec}
+Obtemos:
+\begin{spec}
+f a b c 0 = 0
+f a b c 1 = 1
+f a b c (n+2) = g a b c n
+
+g a b c 0 = 1 
+g a b c (n+1) = a * g a b c n + b * f a b c (n+1) + c * f a b c n
+\end{spec}
+Seguindo a mesma lógica usada anteriormente:
+\begin{spec}
+h a b c 0 = f a b c (0+1)
+h a b c (n+1) = f a b c (n+2)
+\end{spec}
+E obtemos:
+\begin{spec}
+f a b c 0 = 0
+f a b c (n+1) = h a b c n
+
+g a b c 0 = 1 
+g a b c (n+1) = a * g a b c n + b * h a b c n + c * f a b c n
+
+h a b c 0 = 1
+h a b c (n+1) = g a b c n 
+\end{spec}
+Reorganizando as funções devido ao wrapper do loop ser |p2| 
+\begin{spec}
+g a b c 0 = 1 
+g a b c (n+1) = a * g a b c n + b * h a b c n + c * f a b c n
+
+h a b c 0 = 1
+h a b c (n+1) = g a b c n 
+
+f a b c 0 = 0
+f a b c (n+1) = h a b c n
+\end{spec}
+
+Aplicando a regra prática explicada no anexo \ref{sec:mr}, obtemos a solução
 
 Funções auxiliares pedidas:
 \begin{code}
@@ -1118,21 +1168,14 @@ initial = ((1,1),0)
 wrap = p2
 \end{code}
 
-\begin{spec}
-f a b c 0 = 0
-f a b c 1 = 1
-f a b c 2 = 1
-f a b c (n+3) = a * f a b c (n+2) + b * f a b c (n+1) + c * f a b c n
-\end{spec}
-
 \subsection*{Problema 2}
 Gene de |tax|:
 \begin{code}
-gene = (id -|- (id >< (groupBy (\x y -> countSpaces x >= 0 && countSpaces y > 0) . map (drop 4)))) . out
+gene = (id -|- (id >< (groupBy (\x y -> countSpaces y > 0) . map (drop 4)))) . out
 
 countSpaces = length . takeWhile (== ' ')
 \end{code}
-\newpage
+
 Função de pós-processamento:
 \begin{code}
 post :: Exp String String -> [[String]]
@@ -1203,7 +1246,6 @@ sub_side_to_x = split (split (uncurry (-) . (p1 >< id)) (p2 . p1)) p2
 sub_side_to_y = split (split (p1 . p1) (uncurry (-) . (p2 >< id))) p2
 
 
-
 rose2List = cataRose gr2l 
 
 gr2l = cons . (id >< concat)
@@ -1212,7 +1254,9 @@ carpets = anaList gcarp
 
 gcarp = (nil -|- (split (curry sierpinski ((0,0),32)) id)) . outNat
 
-present = undefined
+present = cataList gprst
+
+gprst = either (return . singl) (fmap singl . (>> await) . (drawSq . p1))
 \end{code}
 
 \subsection*{Problema 4}
