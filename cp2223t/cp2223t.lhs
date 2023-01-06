@@ -1254,9 +1254,12 @@ carpets = anaList gcarp
 
 gcarp = (nil -|- (split (curry sierpinski ((0,0),32)) id)) . outNat
 
+present :: [[Square]] -> IO [()]
 present = cataList gprst
 
-gprst = either (return . singl) (fmap singl . (>> await) . (drawSq . p1))
+gprst = either (return . nil) (aux . (((>> await) . drawSq) >< id))
+
+aux (x,y)= do {a <- x ; b <- y ; return (a:b)}
 \end{code}
 
 \subsection*{Problema 4}
