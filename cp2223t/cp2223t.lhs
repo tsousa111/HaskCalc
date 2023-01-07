@@ -196,7 +196,7 @@ import Cp
 import List hiding (fac)
 import NEList (out)
 import Exp
-import Nat hiding (aux)
+import Nat hiding (add_pair)
 import LTree
 import Rose hiding (g)
 import Probability
@@ -757,7 +757,7 @@ do grupo de trabalho, no local respectivo da folha de rosto.
 Para gerar o PDF integral do relatório deve-se ainda correr os comando seguintes,
 que actualizam a bibliografia (com \Bibtex) e o índice remissivo (com \Makeindex),
 \begin{Verbatim}[fontsize=\small]
-    $ bibtex cp2223t.aux
+    $ bibtex cp2223t.add_pair
     $ makeindex cp2223t.idx
 \end{Verbatim}
 e recompilar o texto como acima se indicou.
@@ -1254,27 +1254,37 @@ carpets = anaList gcarp
 
 gcarp = (nil -|- (split (curry sierpinski ((0,0),32)) id)) . outNat
 
-present :: [[Square]] -> IO [()]
 present = cataList gprst
 
-gprst = either (return . nil) (aux . (((>> await) . drawSq) >< id))
-
-aux (x,y)= do {a <- x ; b <- y ; return (a:b)}
+gprst = either (return . nil) (alpha . (id >< ((>> await) . drawSq)) . swap) where
+    alpha (x,y) = do {a <- x ; b <- y ; return (a ++ [b])}
 \end{code}
 
 \subsection*{Problema 4}
 \subsubsection*{Versão não probabilística}
 Gene de |consolidate'|:
 \begin{code}
-cgene = undefined
+
+cgene = either nil cons
+
+add_pair :: (Eq a,Num b) => ((a,b),[(a,b)]) -> [(a,b)]  
+add_pair ((x,y),t) = (x, y + maybe 0 id (List.lookup x t)):(filter(\(a,b) -> a != x) t)
+
 \end{code}
 Geração dos jogos da fase de grupos:
 \begin{code}
-pairup = undefined
 
-matchResult = undefined
+pairup [] = []
+pairup (a:b:xs) = (a,b):pairup xs
 
-glt = undefined
+matchResult crit m@(t1,t2) = teamPoints (crit m) where
+    teamPoints Nothing = [(t1,1),(t2,1)]
+    teamPoints (Just t) = [(t,3)]
+
+glt = (id -|- ((cons >< id) . assocl . (id >< divideList))) . out where
+    divideList l = (take (length l `div` 2) l, drop (length l `div` 2) l)
+
+
 \end{code}
 \subsubsection*{Versão probabilística}
 \begin{code}
