@@ -1170,18 +1170,36 @@ wrap = p2
 
 \subsection*{Problema 2}
 Gene de |tax|:
-\begin{code}
-gene = (id -|- (id >< (groupBy (\x y -> countSpaces y > 0) . map (drop 4)))) . out
+\begin{eqnarray*}
+\xymatrix@@C=2cm{
+    |Exp S S|
+&
+    S + S \times (|Exp S S|)^*
+           \ar[l]_-{|inExp|}
+\\
+     S^*
+        \ar[u]^-{tax}
+        \ar[r]_-{gene}
+&
+     S + S \times (S^*)^*
+           \ar[u]_{id + id \times |tax|^*}
+}
+\end{eqnarray*}
 
-countSpaces = length . takeWhile (== ' ')
+\begin{code}
+gene = (id -|- (id >< (groupBy (\x y -> countSpaces y > 0) . map (drop 4)))) . out where
+    countSpaces = length . takeWhile (== ' ')
 \end{code}
 
+% explicacao do gene
+
+% ---------- Problema 2 Post ---------------
 Função de pós-processamento:
 \begin{code}
 post :: Exp String String -> [[String]]
 post = cataExp (gene_post)
 
-gene_post = (either leftSide rightSide)
+gene_post = either leftSide rightSide
 leftSide = singl . singl 
 rightSide = cons . (split (singl . p1) ((map cons) . lstr . (id >< concat)))
 
@@ -1189,41 +1207,35 @@ rightSide = cons . (split (singl . p1) ((map cons) . lstr . (id >< concat)))
 \begin{eqnarray*}
 \xymatrix@@C=2cm{
     |Exp S S|
-           \ar[d]_-{|post|}
+        \ar[d]_-{|post|}
+        \ar[r]^-{|outExp|}
 &
     S + S \times (|Exp S S|)^*
-           \ar[d]^{id + id \times (|post|)^*}
-           \ar[l]_-{|inExp|}
-\\
-     ((S)^*)^*
+        \ar[d]^-{id + id \times |post|^*}
 &
-     S + S \times (((S)^*)^*)^*
-           \ar[l]^-{|gene_post|}
-}
-\end{eqnarray*}
-
-Analisando melhor o gene do catamorfismo
-
-\begin{eqnarray*}
-\xymatrix@@C=2cm{
-    S  
-        \ar[d]_-{|singl . singl|}
-& 
-    S \times (((S)^*)^*)^*
-           \ar[d]^{|split (singl . p1) ((map cons) . lstr . (id >< concat))|}
 \\
-    ((S)^*)^*
-& 
-    (S)^* + ((S)^*)^*
-           \ar[d]^{|cons|}
+     (S^*)^*
+&
+     S + S \times ((S^*)^*)^*
+        \ar[l]^-{|gene_post|}
+        \ar[d]^-{|singl| + |split (singl . p1) ((map cons) . lstr . (id >< concat))|}
 \\
 &
-    ((S)^*)^*
+    S^* + S^* \times (S^*)^*
+        \ar[ul]^-{|either singl cons|}
 }
 \end{eqnarray*}
 
 
+% explicar post gene
 
+
+% fazer diagrama do hilo
+\begin{code}
+acm_xls_hylo = acm_hylo acm_ccs
+
+acm_hylo = hyloExp gene_post gene
+\end{code}
 
 % ------------ Problema 3 -----------------
 \subsection*{Problema 3}
@@ -1244,22 +1256,93 @@ add_side_to_x = split (split (uncurry (+) . (p1 >< id)) (p2 . p1)) p2
 add_side_to_y = split (split (p1 . p1) (uncurry (+) . (p2 >< id))) p2
 sub_side_to_x = split (split (uncurry (-) . (p1 >< id)) (p2 . p1)) p2
 sub_side_to_y = split (split (p1 . p1) (uncurry (-) . (p2 >< id))) p2
+\end{code}
+
+\begin{eqnarray*}
+\xymatrix@@C=2cm{
+    |Rose Square|
+&
+    |Square| \times (|Rose Square|)^*
+        \ar[l]_-{|inRose|}
+\\
+    |Square| \times |Nat0|
+        \ar[u]^-{squares}
+        \ar[r]_-{gsp}
+&
+    |Square| \times (|Square| \times |Nat0|)^*
+        \ar[u]_-{id \times |squares|^*}
+}
+\end{eqnarray*}
 
 
+\begin{code}
 rose2List = cataRose gr2l 
 
 gr2l = cons . (id >< concat)
-
-carpets = anaList gcarp
-
-gcarp = (nil -|- (split (curry sierpinski ((0,0),32)) id)) . outNat
-
-present = cataList gprst
-
-gprst = either (return . nil) (alpha . (id >< ((>> await) . drawSq)) . swap) where
-    alpha (x,y) = do {a <- x ; b <- y ; return (a ++ [b])}
 \end{code}
 
+% explicar gene do rose2List
+\begin{eqnarray*}
+\xymatrix@@C=2cm{
+    |Rose A|
+        \ar[r]^-{|outRose|}
+        \ar[d]_-{rose2List}
+&
+    A \times (|Rose A|)^*
+        \ar[d]^-{id \times |rose2List|^*}
+\\
+    A^* 
+&
+    A \times (A^*)^*
+        \ar[l]^-{gr2l}
+}
+\end{eqnarray*}
+
+\begin{code}
+carpets = reverse . anaList gcarp
+
+gcarp = (nil -|- (split (curry sierpinski ((0,0),32)) id)) . outNat
+\end{code}
+
+\begin{eqnarray*}
+\xymatrix@@C=2cm{
+    (|Square|^*)^*
+&
+    1 + (|Square|)^* + (|Square|^*)^* 
+        \ar[l]_-{|inList|}
+\\
+    |Nat0|
+        \ar[u]^-{|carpets|}
+        \ar[r]_-{|gcar|}
+&
+    1 + (|Square|^*) \times |Nat0|
+        \ar[u]_-{id + id \times |carpets|}
+}
+\end{eqnarray*}
+% falta diagrama do gene e explicacao
+
+\begin{code}
+present = cataList gprst
+
+gprst = either (return . nil) (alpha . (((>> await) . drawSq) >< id)) where
+    alpha (x,y) = do {a <- x ; b <- y ; return (a:b)}
+\end{code}
+
+\begin{eqnarray*}
+\xymatrix@@C=2cm{
+    (|Square|^*)^*
+        \ar[r]^-{|outList|}
+        \ar[d]_-{|present|}
+&
+    1 + |Square| \times (|Square|^*)^*
+        \ar[d]^-{id + id \times |present|}
+\\
+    |IO(1)|^*
+&
+    1 + (|Square|)^* \times |IO(1)|^*
+        \ar[l]^-{grst}
+}
+\end{eqnarray*}
 \subsection*{Problema 4}
 \subsubsection*{Versão não probabilística}
 Gene de |consolidate'|:
@@ -1272,10 +1355,17 @@ add_pair ((x,y),t) = (x, y + maybe 0 id (List.lookup x t)):(filter(\(a,b) -> a !
 
 \end{code}
 Geração dos jogos da fase de grupos:
+% fazer um transformacao em pointfree por calculo
+%pairup :: [a] -> [(a,a)]
+%pairup [] = []
+%pairup (x:xs) = pairs x xs ++ pairup xs
+%  where pairs _ [] = []
+%        pairs x (y:ys) = (x,y) : pairs x ys
 \begin{code}
 
-pairup [] = []
-pairup (a:b:xs) = (a,b):pairup xs
+pairup = either nil (conc . split (uncurry pairs) (pairup . p2)) . outList where
+    pairs x [] = []
+    pairs x (y:ys) = (x,y) : pairs x ys
 
 matchResult crit m@(t1,t2) = teamPoints (crit m) where
     teamPoints Nothing = [(t1,1),(t2,1)]
