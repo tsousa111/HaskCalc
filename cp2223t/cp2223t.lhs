@@ -1308,7 +1308,7 @@ gcarp = (nil -|- (split (curry sierpinski ((0,0),32)) id)) . outNat
 \xymatrix@@C=2cm{
     (|Square|^*)^*
 &
-    1 + (|Square|)^* + (|Square|^*)^* 
+    1 + |Square|^* \times (|Square|^*)^* 
         \ar[l]_-{|inList|}
 \\
     |Nat0|
@@ -1367,9 +1367,10 @@ pairup = either nil (conc . split (uncurry pairs) (pairup . p2)) . outList where
     pairs x [] = []
     pairs x (y:ys) = (x,y) : pairs x ys
 
-matchResult crit m@(t1,t2) = teamPoints (crit m) where
-    teamPoints Nothing = [(t1,1),(t2,1)]
-    teamPoints (Just t) = [(t,3)]
+matchResult crit m@(t1,t2) = teamPoints m (crit m) 
+
+teamPoints (t1,t2) Nothing = [(t1,1),(t2,1)]
+teamPoints (t1,t2) (Just t) = if t1 == t then [(t1,3),(t2,0)] else [(t2,3),(t1,0)]
 
 glt = (id -|- ((cons >< id) . assocl . (id >< divideList))) . out where
     divideList l = (take (length l `div` 2) l, drop (length l `div` 2) l)
@@ -1378,12 +1379,15 @@ glt = (id -|- ((cons >< id) . assocl . (id >< divideList))) . out where
 \end{code}
 \subsubsection*{Versão probabilística}
 \begin{code}
-pinitKnockoutStage = undefined
+pinitKnockoutStage matches = do {return (initKnockoutStage matches)}
 
 pgroupWinners :: (Match -> Dist (Maybe Team)) -> [Match] -> Dist [Team]
-pgroupWinners = undefined
+pgroupWinners criteria = fmap (fmapBody) . sequence . map (pmatchResult criteria)
 
-pmatchResult = undefined
+fmapBody = best 2 . consolidate . concat
+
+pmatchResult crit m = do {dist <- crit m ; return (teamPoints m dist)}
+
 \end{code}
 
 %----------------- Índice remissivo (exige makeindex) -------------------------%
