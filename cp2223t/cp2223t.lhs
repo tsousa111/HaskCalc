@@ -757,7 +757,7 @@ do grupo de trabalho, no local respectivo da folha de rosto.
 Para gerar o PDF integral do relatório deve-se ainda correr os comando seguintes,
 que actualizam a bibliografia (com \Bibtex) e o índice remissivo (com \Makeindex),
 \begin{Verbatim}[fontsize=\small]
-    $ bibtex cp2223t.add_pair
+    $ bibtex cp2223t.aux
     $ makeindex cp2223t.idx
 \end{Verbatim}
 e recompilar o texto como acima se indicou.
@@ -1212,7 +1212,6 @@ rightSide = cons . (split (singl . p1) ((map cons) . lstr . (id >< concat)))
 &
     S + S \times (|Exp S S|)^*
         \ar[d]^-{id + id \times |post|^*}
-&
 \\
      (S^*)^*
 &
@@ -1348,10 +1347,11 @@ gprst = either (return . nil) (alpha . (((>> await) . drawSq) >< id)) where
 Gene de |consolidate'|:
 \begin{code}
 
-cgene = either nil cons
+cgene :: (Eq a, Num b) => Either () ((a,b),[(a,b)]) -> [(a,b)]
+cgene = either nil add_pair
 
-add_pair :: (Eq a,Num b) => ((a,b),[(a,b)]) -> [(a,b)]  
 add_pair ((x,y),t) = (x, y + maybe 0 id (List.lookup x t)):(filter(\(a,b) -> a != x) t)
+
 
 \end{code}
 Geração dos jogos da fase de grupos:
@@ -1386,7 +1386,7 @@ pgroupWinners criteria = fmap (fmapBody) . sequence . map (pmatchResult criteria
 
 fmapBody = best 2 . consolidate . concat
 
-pmatchResult crit m = do {dist <- crit m ; return (teamPoints m dist)}
+pmatchResult criteria match = do {dist <- criteria match ; return (teamPoints match dist)}
 
 \end{code}
 
