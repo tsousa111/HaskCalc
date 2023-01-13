@@ -1192,6 +1192,10 @@ gene = (id -|- (id >< (groupBy (\x y -> countSpaces y > 0) . map (drop 4)))) . o
 \end{code}
 
 % explicacao do gene
+Em primeiro lugar aplico à lista de input o |out| das listas não vazias, de seguida conservo o elemento singular, e a cabeça
+aplicando a ambos id. Para a cauda da lista removo 4 espaços de todos os elementos para poder distinguir os precedentes
+dos descendentes. Finalmente agrupo os elementos da lista, por número de espaços á cabeça (caso o número de espaços seja 0, 
+indica que esse elemento é o "pai" dessa lista), em várias listas, cujo primeiro elemento é o "pai" dos restantes.
 
 % ---------- Problema 2 Post ---------------
 Função de pós-processamento:
@@ -1225,14 +1229,24 @@ rightSide = cons . (split (singl . p1) ((map cons) . lstr . (id >< concat)))
 }
 \end{eqnarray*}
 
-
 % explicar post gene
+Desenhando o diagrama do catamorfismo de árvores |Exp|, a partir do seu funtor, descobri o tipo de entrada do gene.
 
+De seguida, comecei por analisar qual seria o significado, para este contexto, do tipo de entrada, e cheguei a conclusão
+de que o lado esquerdo da soma, que representa o conteúdo de uma folha da àrvore, logo será um elemento sem descentes.
+Para este caso apenas tenho de aplicar |singl . singl|. Do lado direito da soma, o primeiro elemento do par representa o "pai" 
+de todos os elementos da lista, que contém os resultados das chamadas recursivas. Tendo isso em conta, aplico um split, que
+resulta numa lista com um habitante, o "pai", e uma lista com todos os seus descendentes. Esta lista é obtida da seguinte forma:
+concatenei todos os resultados recursivos, de seguida apliquei ao par |lstr|, para obter uma lista com pares "pai" e lista de descendentes,
+depois para todos os elementos aplico cons para que o "pai" seja adicionada a cabeça de todos os elementos. Por fim aplico cons
+para juntar o par pelo split.
 
 % fazer diagrama do hilo
+Sendo tax e post, um anaformismo e um catamorfismo de árvores |Exp|, respetivamente, o problema 2 poderia ser reescrito na forma
+de hilomorfismo, em que o gene do anamorfismo seria o gene de tax e o gene do catamorfismo o gene de post. Obtendo assim a seguinte 
+função.
 \begin{code}
 acm_xls_hylo = acm_hylo acm_ccs
-
 acm_hylo = hyloExp gene_post gene
 \end{code}
 
@@ -1240,23 +1254,7 @@ acm_hylo = hyloExp gene_post gene
 \subsection*{Problema 3}
 \begin{code}
 squares = anaRose gsq
-
-gsq = (either (id >< nil) (split p1 surrounding_squares)) . distr . (center_square >< outNat) 
-
-center_square = add_side_to_x . add_side_to_y . (id >< (/3))
-
-surrounding_squares = rstr . ((conc . split top_squares (conc . split middle_squares bottom_squares)) >< id)
-
-top_squares = cons . split sub_side_to_x (cons . split id (singl . add_side_to_x)) . add_side_to_y
-middle_squares = cons . split sub_side_to_x (singl . add_side_to_x)
-bottom_squares = cons . split sub_side_to_x (cons . split id (singl . add_side_to_x)) . sub_side_to_y
-
-add_side_to_x = split (split (uncurry (+) . (p1 >< id)) (p2 . p1)) p2
-add_side_to_y = split (split (p1 . p1) (uncurry (+) . (p2 >< id))) p2
-sub_side_to_x = split (split (uncurry (-) . (p1 >< id)) (p2 . p1)) p2
-sub_side_to_y = split (split (p1 . p1) (uncurry (-) . (p2 >< id))) p2
 \end{code}
-
 \begin{eqnarray*}
 \xymatrix@@C=2cm{
     |Rose Square|
@@ -1273,19 +1271,96 @@ sub_side_to_y = split (split (p1 . p1) (uncurry (-) . (p2 >< id))) p2
 }
 \end{eqnarray*}
 
+\begin{code}
+gsq = (either (id >< nil) (split p1 surrounding_squares)) . distr . (center_square >< outNat) 
+center_square ((x,y),s) = ((x+(s/3),y+(s/3)),(s/3))
+\end{code}
+\begin{eqnarray*}
+\xymatrix@@C=2cm{
+    |Square| \times |Nat0|
+        \ar[d]^-{|center_square >< outNat|}
+\\
+    |Square|^* \times (1 + |Nat0|)
+        \ar[d]^-{|distr|}
+\\
+    (|Square| \times 1) + (|Square| \times |Nat0|)
+        \ar[d]^-{|either (id >< nil) (split p1 surrounding_squares)|}
+\\
+    |Square| \times (|Square| \times |Nat0|)^*
+}
+\end{eqnarray*}
+O gene de |squares|, inicialmente calcula o quadrado central e cria uma alternativa para se poder distinguir o 
+caso do número recebido ser 0 ou não. De seguida atrvés de |distr| é o quadrado central é distribuído pelas duas
+alternativas. Caso o número de input seja 0, é conservado o quadrado e é criada uma lista vazia. Caso contrário
+calcula-se todos os quadrados circundantes, e mais uma vez conserva-se o quadrado inicial.
+
+\begin{code}
+surrounding_squares = rstr . ((conc . split top_squares (conc . split middle_squares bottom_squares)) >< id)
+\end{code}
+\begin{eqnarray*}
+\xymatrix@@C=2cm{
+    |Square| \times |Nat0|
+        \ar[d]^-{|(conc . split top_squares (conc . split middle_squares bottom_squares)) >< id|}
+\\
+    |Square|^* \times |Nat0|
+        \ar[d]^-{|rstr|}
+\\
+    (|Square| \times |Nat0|)^*
+}
+\end{eqnarray*}
+A função |surrounding_squares| calcula a lista de todos os quadrados circundantes, e com a utilização de |rstr|
+anexa a todos os seus elementos o número natural recebido, criando assim uma lista de pares, que vai ser usada
+nas chamadas recursivas do funtor.
+
+\begin{code}
+top_squares = cons . split sub_side_to_x (cons . split id (singl . add_side_to_x)) . add_side_to_y
+middle_squares = cons . split sub_side_to_x (singl . add_side_to_x)
+bottom_squares = cons . split sub_side_to_x (cons . split id (singl . add_side_to_x)) . sub_side_to_y
+\end{code}
+
+Diagrama de |top_squares|:
+\begin{eqnarray*}
+\xymatrix@@C=2cm{
+    |Square|
+        \ar[d]^-{|add_side_to_y|}
+\\
+    |Square|
+        \ar[d]^-{|split sub_side_to_x (cons . split id (singl . add_side_to_x))|}
+\\
+    |Square| \times |Square|^*
+        \ar[d]^-{|cons|}
+\\
+    |Square|^*
+}
+\end{eqnarray*}
+A função |top_squares| calcula os 3 quadrados do superiores da grelha. Para obter a sua definição, primeiro adicionei 
+à coordenada y do quadrado de input, ou seja o quadrado central, o lado do quadrado, deste modo obteremos o quadrado 
+central superior. De seguida, a partir de um split, do lado esquerdo subtraio à coordenada x o seu lado, para obter 
+o quadrado superior esquerdo, e do lado direito, uma lista com o quadrado central e o quadrado superior direito. 
+Finalmente junto o quadrado esquerdo à cabeça, resultando numa lista com todos os quadrados superiores.
+
+As funções |middle_squares| e |bottom_squares| seguem a mesma lógica, sendo ligeiramente diferente para os quadrados
+centrais, onde ignoro o quadrado central.
+
+Operações auxiliares sobre os quadrados:
+\begin{code}
+add_side_to_x ((x,y),s) = ((x+s,y),s)
+add_side_to_y ((x,y),s) = ((x,y+s),s)
+sub_side_to_x ((x,y),s) = ((x-s,y),s)
+sub_side_to_y ((x,y),s) = ((x,y-s),s) 
+\end{code}
+
 
 \begin{code}
 rose2List = cataRose gr2l 
 
 gr2l = cons . (id >< concat)
 \end{code}
-
-% explicar gene do rose2List
 \begin{eqnarray*}
 \xymatrix@@C=2cm{
     |Rose A|
         \ar[r]^-{|outRose|}
-        \ar[d]_-{rose2List}
+        \ar[d]_-{|rose2List|}
 &
     A \times (|Rose A|)^*
         \ar[d]^-{id \times |rose2List|^*}
@@ -1293,16 +1368,19 @@ gr2l = cons . (id >< concat)
     A^* 
 &
     A \times (A^*)^*
-        \ar[l]^-{gr2l}
+        \ar[l]^-{|gr2l|}
 }
 \end{eqnarray*}
+A partir do diagrama do catamorfismo |rose2List|, facilmente se chega à definição do seu gene. Sabendo que
+o seu funtor origina um par, apenas temos de concatenar os resultado das chamadas recursivas,
+representado por |(A^*)^*| e adicionar conteúdo do nodo, representado por |A| à cabeça da lista. 
+
 
 \begin{code}
 carpets = reverse . anaList gcarp
 
-gcarp = (nil -|- (split (curry sierpinski ((0,0),32)) id)) . outNat
+gcarp = (id -|- (split (curry sierpinski ((0,0),32)) id)) . outNat
 \end{code}
-
 \begin{eqnarray*}
 \xymatrix@@C=2cm{
     (|Square|^*)^*
@@ -1313,12 +1391,21 @@ gcarp = (nil -|- (split (curry sierpinski ((0,0),32)) id)) . outNat
     |Nat0|
         \ar[u]^-{|carpets|}
         \ar[r]_-{|gcar|}
+        \ar[d]_-{|outNat|}
 &
-    1 + (|Square|^*) \times |Nat0|
+    1 + |Square|^* \times |Nat0|
         \ar[u]_-{id + id \times |carpets|}
+\\
+    1 + |Nat0|
+        \ar[ur]_-{|id| + |(split (curry sierpinski ((0,0),32)) id)|}
+&
 }
 \end{eqnarray*}
-% falta diagrama do gene e explicacao
+Para definir o gene |gcar|, primeiro aplico |outNat|. Caso este seja 0, simplesmente devolve o elemento nulo,
+caso contrário, cria um par com a lista dos quadrados resultantes da função |curry sierpinski ((0,0),32)| para 
+esse número, e o número.
+
+Como a lista originada pelo anamorfismo está por ordem decrescente, aplico a função reverse.
 
 \begin{code}
 present = cataList gprst
@@ -1326,7 +1413,6 @@ present = cataList gprst
 gprst = either (return . nil) (alpha . (((>> await) . drawSq) >< id)) where
     alpha (x,y) = do {a <- x ; b <- y ; return (a:b)}
 \end{code}
-
 \begin{eqnarray*}
 \xymatrix@@C=2cm{
     (|Square|^*)^*
@@ -1338,10 +1424,14 @@ gprst = either (return . nil) (alpha . (((>> await) . drawSq) >< id)) where
 \\
     |IO(1)|^*
 &
-    1 + (|Square|)^* \times |IO(1)|^*
+    1 + |Square| \times |IO(1)|^*
         \ar[l]^-{grst}
 }
 \end{eqnarray*}
+
+
+
+
 \subsection*{Problema 4}
 \subsubsection*{Versão não probabilística}
 Gene de |consolidate'|:
@@ -1351,19 +1441,29 @@ cgene :: (Eq a, Num b) => Either () ((a,b),[(a,b)]) -> [(a,b)]
 cgene = either nil add_pair
 
 add_pair ((x,y),t) = (x, y + maybe 0 id (List.lookup x t)):(filter(\(a,b) -> a != x) t)
-
-
 \end{code}
-Geração dos jogos da fase de grupos:
-% fazer um transformacao em pointfree por calculo
-%pairup :: [a] -> [(a,a)]
-%pairup [] = []
-%pairup (x:xs) = pairs x xs ++ pairup xs
-%  where pairs _ [] = []
-%        pairs x (y:ys) = (x,y) : pairs x ys
-\begin{code}
 
-pairup = either nil (conc . split (uncurry pairs) (pairup . p2)) . outList where
+\begin{eqnarray*}
+\xymatrix@@C=2cm{
+    (A \times B)^*
+        \ar[r]^-{|outList|}
+        \ar[d]_-{|consolidate'|}
+&
+    1 + (A \times B) \times (A \times B)^*
+        \ar[d]^-{id + id \times |consolidate'|}
+\\
+    (A \times B)^*
+&
+    1 + (A \times B) \times (A \times B)^*
+        \ar[l]^-{|cgene|}
+}
+\end{eqnarray*}
+
+
+Geração dos jogos da fase de grupos:
+\begin{code}
+pairup [] = []
+pairup (x:xs) = pairs x xs ++ pairup xs where
     pairs x [] = []
     pairs x (y:ys) = (x,y) : pairs x ys
 
@@ -1374,20 +1474,24 @@ teamPoints (t1,t2) (Just t) = if t1 == t then [(t1,3),(t2,0)] else [(t2,3),(t1,0
 
 glt = (id -|- ((cons >< id) . assocl . (id >< divideList))) . out where
     divideList l = (take (length l `div` 2) l, drop (length l `div` 2) l)
-
-
 \end{code}
+
+
+
 \subsubsection*{Versão probabilística}
 \begin{code}
-pinitKnockoutStage matches = do {return (initKnockoutStage matches)}
+pinitKnockoutStage = return . initKnockoutStage 
+\end{code}
 
+\begin{code}
 pgroupWinners :: (Match -> Dist (Maybe Team)) -> [Match] -> Dist [Team]
 pgroupWinners criteria = fmap (fmapBody) . sequence . map (pmatchResult criteria)
 
 fmapBody = best 2 . consolidate . concat
+\end{code}
 
+\begin{code}
 pmatchResult criteria match = do {dist <- criteria match ; return (teamPoints match dist)}
-
 \end{code}
 
 %----------------- Índice remissivo (exige makeindex) -------------------------%
