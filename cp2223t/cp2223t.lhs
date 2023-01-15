@@ -1229,17 +1229,15 @@ rightSide = cons . (split (singl . p1) ((map cons) . lstr . (id >< concat)))
 }
 \end{eqnarray*}
 
-% explicar post gene
 Desenhando o diagrama do catamorfismo de árvores |Exp|, a partir do seu funtor, descobri o tipo de entrada do gene.
-
-De seguida, comecei por analisar qual seria o significado, para este contexto, do tipo de entrada, e cheguei a conclusão
-de que o lado esquerdo da soma, que representa o conteúdo de uma folha da àrvore, logo será um elemento sem descentes.
-Para este caso apenas tenho de aplicar |singl . singl|. Do lado direito da soma, o primeiro elemento do par representa o "pai" 
-de todos os elementos da lista, que contém os resultados das chamadas recursivas. Tendo isso em conta, aplico um split, que
-resulta numa lista com um habitante, o "pai", e uma lista com todos os seus descendentes. Esta lista é obtida da seguinte forma:
+Tendo isto em mente, comecei por analisar qual seria o significado, para este contexto, do tipo de entrada, e cheguei à conclusão
+de que o lado esquerdo da alternativa, representa o conteúdo de uma folha da àrvore, logo será um elemento sem descentes.
+Para este caso apenas tenho de aplicar |singl . singl|. Do lado direito da alternativa, o primeiro elemento do par representa o "pai" 
+de todos os elementos do segundo elemento par, que contém os resultados das chamadas recursivas. Tendo isso em conta, conservo e crio
+lista com o "pai", e uma lista com todos os seus descendentes. Esta lista é obtida da seguinte forma:
 concatenei todos os resultados recursivos, de seguida apliquei ao par |lstr|, para obter uma lista com pares "pai" e lista de descendentes,
-depois para todos os elementos aplico cons para que o "pai" seja adicionada a cabeça de todos os elementos. Por fim aplico cons
-para juntar o par pelo split.
+depois para todos os elementos aplico |cons| para que o "pai" seja adicionado a cabeça de todos os elementos. Por fim aplico |cons|
+para juntar o par.
 
 % fazer diagrama do hilo
 Sendo tax e post, um anaformismo e um catamorfismo de árvores |Exp|, respetivamente, o problema 2 poderia ser reescrito na forma
@@ -1249,6 +1247,22 @@ função.
 acm_xls_hylo = acm_hylo acm_ccs
 acm_hylo = hyloExp gene_post gene
 \end{code}
+
+\begin{eqnarray*}
+\xymatrix@@C=2cm{
+    S^* 
+        \ar[d]_-{|acm_hylo|}
+        \ar[r]^-{|gene|}
+&
+    S + S \times (S^*)^*
+        \ar[d]^-{id + id \times |acm_hylo|^*}
+\\
+     (S^*)^*
+&
+     S + S \times ((S^*)^*)^*
+        \ar[l]^-{|gene_post|}
+}
+\end{eqnarray*}
 
 % ------------ Problema 3 -----------------
 \subsection*{Problema 3}
@@ -1350,7 +1364,7 @@ sub_side_to_x ((x,y),s) = ((x-s,y),s)
 sub_side_to_y ((x,y),s) = ((x,y-s),s) 
 \end{code}
 
-
+Função de conversão de listas em |Rose| Trees:
 \begin{code}
 rose2List = cataRose gr2l 
 
@@ -1375,7 +1389,7 @@ A partir do diagrama do catamorfismo |rose2List|, facilmente se chega à defini�
 o seu funtor origina um par, apenas temos de concatenar os resultado das chamadas recursivas,
 representado por |(A^*)^*| e adicionar conteúdo do nodo, representado por |A| à cabeça da lista. 
 
-
+Componentes da função |constructSierp|:
 \begin{code}
 carpets = reverse . anaList gcarp
 
@@ -1419,18 +1433,20 @@ gprst = either (return . nil) (alpha . (((>> await) . drawSq) >< id)) where
         \ar[r]^-{|outList|}
         \ar[d]_-{|present|}
 &
-    1 + |Square| \times (|Square|^*)^*
+    1 + |Square|^* \times (|Square|^*)^*
         \ar[d]^-{id + id \times |present|}
 \\
     |IO(1)|^*
 &
-    1 + |Square| \times |IO(1)|^*
+    1 + |Square|^* \times |IO(1)|^*
         \ar[l]^-{grst}
+        \ar[d]^-{|nil| + |((>>await) . drawSq)| \times id}
+\\
+&
+    1 + |IO(1)| \times |IO(1)|^* 
+        \ar[ul]^-{|either return alpha|}
 }
 \end{eqnarray*}
-
-
-
 
 \subsection*{Problema 4}
 \subsubsection*{Versão não probabilística}
@@ -1442,7 +1458,6 @@ cgene = either nil add_pair
 
 add_pair ((x,y),t) = (x, y + maybe 0 id (List.lookup x t)):(filter(\(a,b) -> a != x) t)
 \end{code}
-
 \begin{eqnarray*}
 \xymatrix@@C=2cm{
     (A \times B)^*
@@ -1458,41 +1473,124 @@ add_pair ((x,y),t) = (x, y + maybe 0 id (List.lookup x t)):(filter(\(a,b) -> a !
         \ar[l]^-{|cgene|}
 }
 \end{eqnarray*}
+Após desenhar o diagram do catamorfismo de |consolidate'|, cheguei à seguinte definição do seu gene. Caso este receba o elemento
+nulo, devolve a lista vazia, caso contrário, com a ajuda da função |add_pair|, procura na lista resultante da chamada recursiva
+por elementos que tenham a mesma "chave" e, se ela existir adiciona o conteúdo associado ao segundo elemento. Por fim retira todos
+os elementos que tenham a mesma "chave" e adiciona a cabeça o novo par.
 
 
 Geração dos jogos da fase de grupos:
+
 \begin{code}
 pairup [] = []
-pairup (x:xs) = pairs x xs ++ pairup xs where
-    pairs x [] = []
-    pairs x (y:ys) = (x,y) : pairs x ys
+pairup (h:t) = curry lstr h t ++ pairup t 
+\end{code}
+A função |pairup| está encarregue de criar todos as possibilidades de jogos entre equipas. Para isso, recebendo uma lista
+de equipas, com o auxílio o função |lstr| cria uma lista com todos os pares entre a cabeça e o resto dos elementos, deste modo 
+não existirão pares repetidos. Por fim adiciona-os à cabeça da lista resultante da chamada recursiva, retornando
+a lista com todos os jogos possíveis não repetidos.
 
-matchResult crit m@(t1,t2) = teamPoints m (crit m) 
-
+\begin{code}
+matchResult crit m = teamPoints m (crit m) 
 teamPoints (t1,t2) Nothing = [(t1,1),(t2,1)]
 teamPoints (t1,t2) (Just t) = if t1 == t then [(t1,3),(t2,0)] else [(t2,3),(t1,0)]
+\end{code}
+A função |matchResult|, aplica um critério recebido ao jogo também recebido, e de seguida, usando a função |teamPoints| cria a 
+lista com o resultado do jogo. Caso o resultado seja |Nothing|, que significa um empate, ambas as equipas recebem 1 ponto, caso
+contrário a equipa vencedora recebe 3 pontos.
 
+\begin{eqnarray*}
+\xymatrix@@C=2cm{
+    |LTree A| 
+&
+    A + |LTree A| \times |LTree A|
+        \ar[l]_-{|inLTree|}
+\\
+    A^*  
+        \ar[u]^-{|anaLTree glt|}
+        \ar[r]_-{|glt|}
+&
+    A + A^* \times A^*
+        \ar[u]_-{id + |anaLTree glt| \times |anaLTree glt|}
+}
+\end{eqnarray*}
+\begin{code}
 glt = (id -|- ((cons >< id) . assocl . (id >< divideList))) . out where
     divideList l = (take (length l `div` 2) l, drop (length l `div` 2) l)
 \end{code}
+\begin{eqnarray*}
+\xymatrix@@C=2cm{
+    A^*
+        \ar[d]^-{|out|}
+\\
+    A + A \times A^* 
+        \ar[d]^-{|id| + |id| \times divideList}
+\\
+    A + A \times (A^* \times A^*)
+        \ar[d]^-{|id| + |assocl|}
+\\
+    A + (A \times A^*) \times A^*
+        \ar[d]^-{|id| + |cons| \times |id|}
+\\
+    A + A^* \times A^*
+}
+\end{eqnarray*}
+Para definir o gene de |anaLTree glt|, comecei por desenhar o seu diagrama.
 
-
+De seguida com ajuda do diagrama acima, apliquei o |out| das listas não vazias, e caso o input seja 
+uma lista com um só elemento, é conservado e retornado. Caso contrário, reparto a cauda da lista em 
+2 partes, associo o a cabeça à primeira lista, e finalmente adiciono a cabeça à mesma.
 
 \subsubsection*{Versão probabilística}
 \begin{code}
 pinitKnockoutStage = return . initKnockoutStage 
 \end{code}
+\begin{eqnarray*}
+\xymatrix@@C=2cm{
+    (|Team|^*)^*
+        \ar[d]^-{|initKnockoutStage|}
+\\
+    |LTree Team|
+        \ar[d]^-{|return|}
+\\
+    |Dist (LTree Team)|
+}
+\end{eqnarray*}
+Analisando a função |pgroupStage|, reparei que a função |pinitKnockoutStage| está em composição monádica com a função
+|psimulateGroupStage| logo o seu input já será o conteúdo do mónade. Sendo assim pode-se reaproveitar a função definida
+para a versão não probabilística, |initKnockoutStage| e de seguida retornar esse resultado, de forma a devolver o mónade 
+|Dist (LTree Team)|.
+
 
 \begin{code}
 pgroupWinners :: (Match -> Dist (Maybe Team)) -> [Match] -> Dist [Team]
-pgroupWinners criteria = fmap (fmapBody) . sequence . map (pmatchResult criteria)
-
+pgroupWinners criteria = fmap fmapBody . sequence . map (pmatchResult criteria)
 fmapBody = best 2 . consolidate . concat
-\end{code}
-
-\begin{code}
 pmatchResult criteria match = do {dist <- criteria match ; return (teamPoints match dist)}
 \end{code}
+\begin{eqnarray*}
+\xymatrix@@C=2cm{
+    |Match|^*
+        \ar[d]^-{|pmatchResult criteria|}
+\\
+    (|Dist| (Match \times |Nat0|)^*)^*
+        \ar[d]^-{|sequence|}
+\\
+    |Dist| ((|Match| \times |Nat0|)^*)^*
+    \ar[d]^-{|fmap fmapBody|}
+\\
+    |Dist Team|^*
+}
+\end{eqnarray*}
+Para a função |pgroupWinners|, começo por aplicar a função |pmatchResult| a todos os elementos da lista
+de jogos, de forma obter uma lista de mónades de distribuições com a lista de todos os resultados possíveis dos jogos. 
+De seguida, aplicando |sequence| transforma-se a lista de mónades num mónade de listas, em que o seu resultado é
+a distribuição probabilística de todas as combinações dos resultados dos jogos. Usando |fmap|, altera-se o 
+conteúdo do mónade com a função |fmapBody|. Para definir a função |fmapBody|, inicialmente concatenam-se todos os elementos
+da lista, neste caso os resultados dos jogos, de seguida |consolidate| de forma a obter os pontos finais das equipas, e 
+com |best 2| retornam-se as 2 equipas com os melhores resultados. Esta função irá retornar uma distribuição probabilística
+das 2 melhores equipas do grupo.
+
 
 %----------------- Índice remissivo (exige makeindex) -------------------------%
 
