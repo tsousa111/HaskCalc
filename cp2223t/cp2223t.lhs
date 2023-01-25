@@ -1391,7 +1391,7 @@ representado por |(A^*)^*| e adicionar conteúdo do nodo, representado por |A| �
 
 Componentes da função |constructSierp|:
 \begin{code}
-carpets = reverse . anaList gcarp
+carpets = anaList gcarp
 
 gcarp = (id -|- (split (curry sierpinski ((0,0),32)) id)) . outNat
 \end{code}
@@ -1419,13 +1419,11 @@ Para definir o gene |gcar|, primeiro aplico |outNat|. Caso este seja 0, simplesm
 caso contrário, cria um par com a lista dos quadrados resultantes da função |curry sierpinski ((0,0),32)| para 
 esse número, e o número.
 
-Como a lista originada pelo anamorfismo está por ordem decrescente, aplico a função reverse.
-
 \begin{code}
 present = cataList gprst
 
 gprst = either (return . nil) (alpha . (((>> await) . drawSq) >< id)) where
-    alpha (x,y) = do {a <- x ; b <- y ; return (a:b)}
+    alpha (x,y) = do {b <- y ; a <- x ; return (a:b)}
 \end{code}
 \begin{eqnarray*}
 \xymatrix@@C=2cm{
